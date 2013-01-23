@@ -1,7 +1,7 @@
 
 (defpackage :plotter
   (:nicknames #:plt)
-  (:use       #:common-lisp #:vector-ops)
+  (:use       #:common-lisp)
   (:export
    #:*plotter-window-class*
    #:<plotter-window>
