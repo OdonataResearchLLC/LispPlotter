@@ -25,9 +25,6 @@
 (defclass <array-scanner> (<limited-scanner>)
   ((arr  :accessor scanner-array :initarg :array)))
 
-(defclass <carray-scanner> (<limited-scanner>)
-  ((arr  :accessor scanner-array :initarg :array)))
-
 ;; ===============
 (defmethod make-scanner ((limit integer) &key (max-items limit))
   (make-instance '<counting-scanner>
@@ -51,11 +48,6 @@
   (make-instance '<array-scanner>
                  :array  arr
                  :limit  (min (array-total-size arr) max-items)))
-
-(defmethod make-scanner ((arr ca:<carray>) &key (max-items (ca:carray-total-size arr)))
-  (make-instance '<carray-scanner>
-                 :array  arr
-                 :limit  (min (ca:carray-total-size arr) max-items)))
 
 ;; ===============
 ;; All scanners pass through NIL as the terminal value
@@ -94,16 +86,6 @@
                    (its-array scanner-array   )) ascanner
     (when (< position limit)
       (let ((ans (row-major-aref its-array position)))
-        (incf position)
-        ans))
-    ))
-
-(defmethod next-item ((cascanner <carray-scanner>))
-  (with-accessors ((position  scanner-position)
-                   (limit     scanner-limit   )
-                   (its-array scanner-array   )) cascanner
-    (when (< position limit)
-      (let ((ans (ca:row-major-caref its-array position)))
         (incf position)
         ans))
     ))
@@ -166,6 +148,3 @@
 (defmethod reset-scanner ((pairs <pair-scanner>))
   (reset-scanner (pair-scanner-xsrc pairs))
   (reset-scanner (pair-scanner-ysrc pairs)))
-
-
-
