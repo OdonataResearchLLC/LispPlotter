@@ -53,7 +53,8 @@
     (loop for pair = (next-item bars)
           while pair
           do
-          (destructure-vector (x y) pair
+          (let ((x (aref pair 0))
+                (y (aref pair 1)))
             (when xprev
               (setf wd   (abs (- x xprev))
                     wd/2 (* 0.5 wd))
@@ -87,7 +88,8 @@
     (loop for pair = (next-item bars)
           while pair
           do
-          (destructure-vector (x y) pair
+          (let ((x (aref pair 0))
+                (y (aref pair 1)))
             (when yprev
               (setf wd   (abs (- y yprev))
                     wd/2 (* 0.5 wd))
@@ -121,7 +123,8 @@
     (loop for pair = (next-item pairs)
           while pair
           do
-          (destructure-vector (x y) pair
+          (let ((x (aref pair 0))
+                (y (aref pair 1)))
             (when xprev
               (setf wd   (abs (- x xprev))
                     wd/2 (* 0.5 wd))
@@ -148,7 +151,8 @@
     (loop for pair = (next-item pairs)
           while pair
           do
-          (destructure-vector (x y) pair
+          (let ((x (aref pair 0))
+                (y (aref pair 1)))
             (when (and (simple-real-number x)
                        (simple-real-number y))
               (when (and xprev
@@ -363,7 +367,7 @@
                                                                     (line-color line-style)
                                                                     (line-alpha line-style))
                                           :dashed     (line-dashing line-style)
-                                          :dash       (mapcar (um:expanded-curry (v) #'* sf)
+                                          :dash       (mapcar (expanded-curry (v) #'* sf)
                                                               (line-dashing line-style)))
                    (gp:with-graphics-scale (port sf sf)
                      (gp:with-graphics-transform (port xform)
@@ -388,7 +392,8 @@
                           (loop for pair = (next-item pairs)
                                 while pair
                                 do
-                                (destructure-vector (x y) pair
+                                (let ((x (aref pair 0))
+                                      (y (aref pair 1)))
                                   (multiple-value-bind (xx yy)
                                       (gp:transform-point xform x y)
                                     (multiple-value-bind (_ yy0)
@@ -419,7 +424,8 @@
                           (loop for pair = (next-item pairs)
                                 while pair
                                 do
-                                (destructure-vector (x y) pair
+                                (let ((x (aref pair 0))
+                                      (y (aref pair 1)))
                                   (multiple-value-bind (xx yy)
                                       (gp:transform-point xform x y)
                                     (multiple-value-bind (xx0 _)
@@ -452,7 +458,8 @@
                         (loop for pair = (next-item pairs)
                               while pair
                               do
-                              (destructure-vector (x y) pair
+                              (let ((x (aref pair 0))
+                                    (y (aref pair 1)))
                                 (multiple-value-bind (xx yy)
                                     (gp:transform-point xform x y)
                                   (multiple-value-bind (_ yy0)
@@ -474,7 +481,8 @@
                       (loop for pair = (next-item pairs)
                             while pair
                             do
-                            (destructure-vector (x y) pair
+                            (let ((x (aref pair 0))
+                                  (y (aref pair 1)))
                               (multiple-value-bind (xx yy)
                                   (gp:transform-point xform x y)
                                 (funcall plotfn xx yy)
@@ -511,7 +519,8 @@
   (ecase symbol
     (:sigma
      (lambda (x ys)
-       (destructure-vector (ymin ymax) ys
+       (let ((ymin (aref ys 0))
+             (ymax (aref ys 1)))
          (gp:draw-line port x ymin x ymax)
          (gp:draw-line port (- x (/ bar-width 2)) ymin (+ x (/ bar-width 2)) ymin)
          (gp:draw-line port (- x (/ bar-width 2)) ymax (+ x (/ bar-width 2)) ymax)
@@ -519,20 +528,26 @@
 
     (:hl-bar
      (lambda (x ys)
-       (destructure-vector (ymin ymax) ys
+       (let ((ymin (aref ys 0))
+             (ymax (aref ys 1)))
          (gp:draw-line port x ymin x ymax)
          )))
     
     (:hlc-bar
      (lambda (x ys)
-       (destructure-vector (h l c) ys
+       (let ((h (aref ys 0))
+             (l (aref ys 1))
+             (c (aref ys 2)))
          (gp:draw-line port x l x h)
          (gp:draw-line port x c (+ x (/ bar-width 2)) c)
          )))
     
     (:ohlc-bar
      (lambda (x ys)
-       (destructure-vector (o h l c) ys
+       (let ((o (aref ys 0))
+             (h (aref ys 1))
+             (l (aref ys 2))
+             (c (aref ys 3)))
          (with-color (port (if (funcall testfn c o) neg-color color))
            (gp:draw-line port x l x h)
            (gp:draw-line port (- x (/ bar-width 2)) o x o)
@@ -541,7 +556,10 @@
     
     (:candlestick
      (lambda (x ys)
-       (destructure-vector (o h l c) ys
+       (let ((o (aref ys 0))
+             (h (aref ys 1))
+             (l (aref ys 2))
+             (c (aref ys 3)))
          (if (funcall testfn c o)
              (with-color (port neg-color)
                (gp:draw-line port x l x h)
@@ -600,7 +618,7 @@
                                                   :max-items nel)))
                       (make-transformer scanner
                                         (if (plotter-xlog cpw)
-                                            (um:compose xform #'log10)
+                                            (compose xform #'log10)
                                           xform))
                       ))
 
@@ -610,10 +628,10 @@
                       ))
 
          (ys        (let* ((scanners (mapcar #'make-scanner yvectors)))
-                      (mapcar (um:rcurry #'make-transformer
-                                         (if (plotter-ylog cpw)
-                                             (um:compose xform-y #'log10)
-                                           xform-y))
+                      (mapcar (rcurry #'make-transformer
+                                      (if (plotter-ylog cpw)
+                                          (compose xform-y #'log10)
+                                          xform-y))
                               scanners)
                       ))
          (c<o-testfn (let ((y1 (funcall xform-y 0))
