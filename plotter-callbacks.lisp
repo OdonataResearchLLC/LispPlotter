@@ -290,12 +290,12 @@
           (gp:transform-point inv-xform (/ x eff-sf) (/ y eff-sf))
         (list (funcall ;;real-eval-with-nans
                (if xlog
-                   (um:compose x-readout-hook #'pow10)
+                   (compose x-readout-hook #'pow10)
                  x-readout-hook)
                xx)
               (funcall ;;real-eval-with-nans
                (if ylog
-                   (um:compose y-readout-hook #'pow10)
+                   (compose y-readout-hook #'pow10)
                  y-readout-hook)
                yy)
               ))
@@ -353,12 +353,10 @@
         
         (t (destructuring-bind (xx yy) (compute-x-y-at-cursor pane x y)
              (labels ((fmt (val)
-                        ;; (format nil "~,5g" val)
                         (string-trim " "
                                      (if (realp val)
-                                         (engfmt:engineering-format nil val :nsig 3)
-                                       (format nil "~A" val)))
-                        ))
+                                         (format nil "~,5g" val)
+                                         (format nil "~A" val)))))
                (let* ((xstr (fmt xx))
                       (ystr (fmt yy))
                       (mx   (mark-x pane))
