@@ -26,7 +26,7 @@
 
 ;;---------
 (defmethod vmax-of ((arg vector))
-  (loop for item on arg maximize item))
+  (loop for item across arg maximize item))
 
 (defmethod vmax-of ((arg list))
   (loop for item in arg maximize item))
@@ -37,7 +37,7 @@
 
 ;;---------
 (defmethod vmin-of ((arg vector))
-  (loop for item on arg minimize item))
+  (loop for item across arg minimize item))
 
 (defmethod vmin-of ((arg list))
   (loop for item in arg minimize item))
