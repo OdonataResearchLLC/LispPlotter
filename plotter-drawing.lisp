@@ -144,21 +144,18 @@
 
 (defmethod draw-polyline (port (pairs <pair-scanner>))
   (let (xprev yprev)
-    (loop for pair = (next-item pairs)
-          while pair
-          do
-          (let ((x (aref pair 0))
-                (y (aref pair 1)))
-            (when (and (simple-real-number x)
-                       (simple-real-number y))
-              (when (and xprev
-                         (or (/= x xprev)
-                             (/= y yprev)))
-                  (gp:draw-line port xprev yprev x y))
-              (setf xprev x
-                    yprev y)))
-          )))
-  
+    (loop
+     for pair = (next-item pairs)
+     while pair do
+     (let ((x (aref pair 0))
+           (y (aref pair 1)))
+       (when (and (simple-real-number x) (simple-real-number y))
+         (when (and xprev (or (/= x xprev) (/= y yprev)))
+           (gp:draw-line port xprev yprev x y))
+         (setf
+          xprev x
+          yprev y))))))
+
 ;; ----------------------------------------------------------  
 
 (defun get-symbol-plotfn (port sf symbol-style)
