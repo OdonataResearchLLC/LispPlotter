@@ -58,7 +58,7 @@ the NEXT-ITEM method"))
   (:documentation
    "Return the appropriate scanner instance for the object."))
 
-(defmethod make-scanner ((object integer) &key (max-items limit))
+(defmethod make-scanner ((object integer) &key (max-items object))
   (make-instance '<counting-scanner> :limit (min object max-items)))
 
 (defmethod make-scanner ((object vector) &key max-items)
