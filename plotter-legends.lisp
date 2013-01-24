@@ -85,7 +85,7 @@
                                                              (line-thick line-style))))
                                       :dashed     (and line-style
                                                        (line-dashing line-style))
-                                      :dash       (mapcar (um:expanded-curry (v) #'* sf)
+                                      :dash       (mapcar (expanded-curry (v) #'* sf)
                                                           (and line-style
                                                                (line-dashing line-style)))
                                       :foreground (if line-style
