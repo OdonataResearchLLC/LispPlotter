@@ -21,3 +21,12 @@
 (defun rcurry (fn &rest suf-args)
   (lambda (&rest pref-args)
     (apply fn (nconc pref-args suf-args))))
+
+(defun raw-mkstr (&rest args)
+  (with-output-to-string (s)
+    (dolist (a args)
+      (princ a s))))
+
+(defun mkstr (&rest args)
+  (with-standard-io-syntax
+    (apply 'raw-mkstr args)))

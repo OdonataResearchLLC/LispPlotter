@@ -106,7 +106,7 @@
   (cond
    
    ((consp pos-expr)
-    (let* ((sym (um:mkstr (first pos-expr)))
+    (let* ((sym (mkstr (first pos-expr)))
            (val (second pos-expr)))
       (ecase (char-upcase (char sym 0))
         ;; accommodates :DATA :DAT :D :DATUM, :FRAC :F :FRACTION, :PIXEL :P :PIX :PIXELS, etc.
