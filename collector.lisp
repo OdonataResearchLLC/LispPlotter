@@ -5,26 +5,22 @@
 ;;
 ;; DM/RAL 02/07 -- added a Lock for MP safety
 
-(in-package :useful-macros)
+(in-package :plotter)
 
 (defclass <collector> ()
   ((hd   :accessor collector-hd)
    (tl   :accessor collector-tl)))
 
 (defmethod collector-discard-contents ((c <collector>))
-  #f
   (let ((v (list nil)))
     (setf (collector-hd c) v
-          (collector-tl c) v)
-    ))
+          (collector-tl c) v)))
 
 (defmethod collector-stuff-contents ((c <collector>) lst)
-  #f
   (setf (collector-hd c) (cons nil lst)
         (collector-tl c) (last lst)))
 
 (defmethod initialize-instance :after ((c <collector>) &key &allow-other-keys)
-  #f
   (collector-discard-contents c))
 
 (defmethod collector-contents ((c <collector>) &key (discard t))
@@ -34,38 +30,31 @@
   ;;
   ;; If user doesn't want to discard contents,
   ;; then hand him a copy of the contents as they exist at this moment.
-  #f
   (let ((lst (cdr (the cons (collector-hd c)))))
     (declare (list lst))
     (if discard
         (progn
           (collector-discard-contents c)
           lst)
-      (copy-list lst))
-    ))
+        (copy-list lst))))
     
 (defmethod collector-ncontents ((c <collector>))
-  #f
   (length (cdr (the cons (collector-hd c)))))
 
 (defmethod collector-empty-p ((c <collector>))
-  #f
   (null (cdr (the cons (collector-hd c)))))
 
 (defmethod collector-append-item ((c <collector>) item)
-  #f
-  (setf (collector-tl c)
-        (cdr (the cons (rplacd (the cons (collector-tl c)) (list item))))
-        ))
+  (setf
+   (collector-tl c)
+   (cdr (the cons (rplacd (the cons (collector-tl c)) (list item))))))
 
 (defmethod collector-push-item ((c <collector>) item)
-  #f
-  (setf (collector-hd c)
-        (cons nil (the cons (rplaca (the cons (collector-hd c)) item)))
-        ))
+  (setf
+   (collector-hd c)
+   (cons nil (the cons (rplaca (the cons (collector-hd c)) item)))))
 
 (defmethod collector-pop ((c <collector>))
-  #f
   (let* ((lst (cdr (the cons (collector-hd c))))
          (v   (car lst)))
     (declare (list lst))
@@ -75,7 +64,6 @@
     v))
 
 (defun make-collector ()
-  #f
   (make-instance '<collector>))
 
 ;; -------------------------------------------------
@@ -117,10 +105,10 @@
 ;; ----------------------------------------------------------
 (defclass <mpsafe-collector-mixin> ()
   ((lock :accessor mpsafe-lock
-         :initform (mpcompat:make-lock :name "MPSafe Mixin Lock"))))
+         :initform (mp:make-lock :name "MPSafe Mixin Lock"))))
 
 (defmacro with-locked-instance ((m &rest lock-args) &body body)
-  `(#+:LISPWORKS mpcompat:with-spinlock
+  `(#+:LISPWORKS mp:with-lock
     #+:ALLEGRO   mp:with-process-lock
     #+:CLOZURE   ccl:with-lock-grabbed
     #+:SBCL      sb-thread:with-recursive-lock

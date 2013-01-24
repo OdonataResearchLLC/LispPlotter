@@ -101,7 +101,7 @@
    (box           :accessor plotter-box)
    (xform         :accessor plotter-xform          :initform '(1 0 0 1 0 0))
    (inv-xform     :accessor plotter-inv-xform      :initform '(1 0 0 1 0 0))
-   (dlist         :accessor plotter-display-list   :initform  (um:make-mpsafe-monitored-collector))
+   (dlist         :accessor plotter-display-list   :initform  (make-mpsafe-monitored-collector))
    (delayed       :accessor plotter-delayed-update :initform 0)
    
    ;; info for nice looking zooming
@@ -111,7 +111,7 @@
    (sf            :accessor plotter-sf    :initform 1)
    (magn          :accessor plotter-magn  :initform 1)
 
-   (legend-info   :accessor plotter-legend-info        :initform (um:make-collector))
+   (legend-info   :accessor plotter-legend-info        :initform (make-collector))
    (legend-x      :accessor plotter-legend-x           :initform '(:frac 0.95))
    (legend-y      :accessor plotter-legend-y           :initform '(:frac 0.95))
    (legend-anchor :accessor plotter-legend-anchor      :initform :auto)
@@ -121,8 +121,7 @@
   
    (dirty         :accessor plotter-dirty              :initform nil)
    (needs-legend  :accessor plotter-needs-legend       :initform nil)
-   (reply-mbox    :accessor reply-mbox                 :initform nil)
-   )
+   (reply-mbox    :accessor reply-mbox                 :initform nil))
   (:default-initargs
    :nominal-width      400
    :nominal-height     300
@@ -309,24 +308,24 @@
 
 ;; -------------------------------------------------------------------
 (defun append-display-list (pane item)
-  (um:collector-append-item (plotter-display-list pane) item))
+  (collector-append-item (plotter-display-list pane) item))
 
 (defun discard-display-list (pane)
-  (um:collector-discard-contents (plotter-display-list pane))
-  (um:collector-discard-contents (plotter-legend-info pane)))
+  (collector-discard-contents (plotter-display-list pane))
+  (collector-discard-contents (plotter-legend-info pane)))
 
 (defun display-list-items (pane &key discard)
-  (um:collector-contents (plotter-display-list pane) :discard discard))
+  (collector-contents (plotter-display-list pane) :discard discard))
 
 (defun display-list-empty-p (pane)
-  (um:collector-empty-p (plotter-display-list pane)))
+  (collector-empty-p (plotter-display-list pane)))
 
 
 (defun append-legend (pane item)
-  (um:collector-append-item (plotter-legend-info pane) item))
+  (collector-append-item (plotter-legend-info pane) item))
 
 (defun all-legends (pane &key discard)
-  (um:collector-contents (plotter-legend-info pane) :discard discard))
+  (collector-contents (plotter-legend-info pane) :discard discard))
 
 (defun discard-legends (pane)
-  (um:collector-discard-contents (plotter-legend-info pane)))
+  (collector-discard-contents (plotter-legend-info pane)))
