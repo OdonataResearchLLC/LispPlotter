@@ -16,3 +16,8 @@
         :mask ,mask)
      ,@body))
 
+;;; Useful macros
+
+(defun rcurry (fn &rest suf-args)
+  (lambda (&rest pref-args)
+    (apply fn (nconc pref-args suf-args))))
