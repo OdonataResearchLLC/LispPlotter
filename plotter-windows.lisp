@@ -136,8 +136,7 @@
                     (visible-min-height (/ ysize 2))
                     (visible-max-width  (* xsize 2))
                     (visible-max-height (* ysize 2))
-                    (cursor             (or *cross-cursor*
-                                            :crosshair))
+                    (cursor             :crosshair)
                     full-crosshair
                     (window-styles '(:internal-borderless))
                     (window-class *plotter-window-class*)
