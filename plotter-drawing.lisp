@@ -78,36 +78,34 @@
   (let* (xprev
          yprev
          last-y
-         (wd   (* 0.1 (gp:port-height port))) ;; default if only one data point
+         ;; default if only one data point
+         (wd   (* 0.1 (gp:port-height port)))
          (wd/2 (* 0.5 wd)))
-    (loop for pair = (next-item bars)
-          while pair
-          do
-          (let ((x (aref pair 0))
-                (y (aref pair 1)))
-            (when yprev
-              (setf wd   (abs (- y yprev))
-                    wd/2 (* 0.5 wd))
-              (unless (= x xprev)
-                (let ((next-y (+ yprev wd/2))
-                      (prev-y (or last-y
-                                  (- yprev wd/2))
-                              ))
-                  (gp:draw-rectangle port 0 prev-y xprev (- next-y prev-y) :filled t)
-                  (setf last-y next-y)
-                  )))
-            (setf xprev x
-                  yprev y))
-          finally
-          (when xprev
-            ;; use the last known width
-            (let ((next-y (+ yprev wd/2))
-                  (prev-y (or last-y
-                              (- yprev wd/2))
-                          ))
-              (gp:draw-rectangle port 0 prev-y xprev (- next-y prev-y) :filled t)
-              ))
-          )))
+    (loop
+     for pair = (next-item bars)
+     while pair do
+     (let ((x (aref pair 0))
+           (y (aref pair 1)))
+       (when yprev
+         (setf
+          wd (abs (- y yprev))
+          wd/2 (* 0.5 wd))
+         (unless (= x xprev)
+           (let ((next-y (+ yprev wd/2))
+                 (prev-y (or last-y (- yprev wd/2))))
+             (gp:draw-rectangle
+              port 0 prev-y xprev (- next-y prev-y) :filled t)
+             (setf last-y next-y))))
+       (setf
+        xprev x
+        yprev y))
+     finally
+     ;; use the last known width
+     (when xprev
+       (let ((next-y (+ yprev wd/2))
+             (prev-y (or last-y (- yprev wd/2))))
+         (gp:draw-rectangle
+          port 0 prev-y xprev (- next-y prev-y) :filled t))))))
 
 (defmethod draw-staircase (port (pairs <pair-scanner>))
   (let* (xprev
