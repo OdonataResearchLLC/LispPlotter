@@ -1,13 +1,12 @@
 
 (in-package :plotter)
 
-;; ------------------------------------------
 (defun draw-path (port &rest positions)
-  (gp:draw-polygon port
-                   (mapcan #'append positions)))
+  (gp:draw-polygon
+   port (mapcan #'append positions)))
 
-;; ------------------------------------------
-#|
+#| IMPLEMENT -or- DELETE
+
 (defun zip (&rest seqs)
   (apply #'map 'list #'list seqs))
 
@@ -43,42 +42,38 @@
   (mapcan #'nconc (apply #'zip seqs)))
 
 |#
-;; -------------------------------------------------------
+
 (defmethod draw-vertical-bars (port (bars <pair-scanner>))
   (let* (xprev
          yprev
          last-x
-         (wd   (* 0.1 (gp:port-width port))) ;; default if only one data point
+         ;; default if only one data point
+         (wd   (* 0.1 (gp:port-width port)))
          (wd/2 (* 0.5 wd)))
-    (loop for pair = (next-item bars)
-          while pair
-          do
-          (let ((x (aref pair 0))
-                (y (aref pair 1)))
-            (when xprev
-              (setf wd   (abs (- x xprev))
-                    wd/2 (* 0.5 wd))
-              (unless (= y yprev)
-                (let ((next-x (+ xprev wd/2))
-                      (prev-x (or last-x
-                                  (- xprev wd/2))
-                              ))
-                  (gp:draw-rectangle port prev-x 0 (- next-x prev-x) yprev :filled t)
-                  (setf last-x next-x)
-                  )))
-            (setf xprev x
-                  yprev y))
-          finally
-          (when xprev
-            ;; use the last known width
-            (let ((next-x (+ xprev wd/2))
-                  (prev-x (or last-x
-                              (- xprev wd/2))
-                          ))
-              (gp:draw-rectangle port prev-x 0 (- next-x prev-x) yprev :filled t)
-              ))
-          )))
-                             
+    (loop
+     for pair = (next-item bars)
+     while pair do
+     (let ((x (aref pair 0))
+           (y (aref pair 1)))
+       (when xprev
+         (setf
+          wd (abs (- x xprev))
+          wd/2 (* 0.5 wd))
+         (unless (= y yprev)
+           (let ((next-x (+ xprev wd/2))
+                 (prev-x (or last-x (- xprev wd/2))))
+             (gp:draw-rectangle
+              port prev-x 0 (- next-x prev-x) yprev :filled t)
+             (setf last-x next-x))))
+       (setf xprev x yprev y))
+     finally
+     ;; use the last known width
+     (when xprev
+       (let ((next-x (+ xprev wd/2))
+             (prev-x (or last-x (- xprev wd/2))))
+              (gp:draw-rectangle
+               port prev-x 0 (- next-x prev-x) yprev :filled t))))))
+
 (defmethod draw-horizontal-bars (port (bars <pair-scanner>))
   (let* (xprev
          yprev
