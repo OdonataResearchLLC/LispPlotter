@@ -254,7 +254,7 @@
     (discard-display-list pane)
     (with-delayed-update (pane)
       (set-reply-mbox pane reply-mbox)
-      (um:collector-stuff-contents (plotter-display-list pane) lst))
+      (collector-stuff-contents (plotter-display-list pane) lst))
     ))
       
 ;; -------------------------------------------------------------------
@@ -269,7 +269,7 @@
   ;; allow a list of yvectors to be given
   ;; so that we can find the best fitting autoscale that accommodates all of them
   (multiple-value-bind (xv yv)
-      (let ((ylist (remove nil (um:mklist yvectors))))
+      (let ((ylist (remove nil (mklist yvectors))))
         (values (or (and xvector
                          (let ((xv (filter-potential-nans-and-infinities xvector xlog)))
                            (vector (vmin-of xv) (vmax-of xv))))
@@ -278,7 +278,7 @@
                          (vector (if xlog 0.1 0) (1- (length-of (first ylist))))
                          ))
                 (and ylist
-                     (let ((ys (mapcar (um:rcurry #'filter-potential-nans-and-infinities ylog) ylist)))
+                     (let ((ys (mapcar (rcurry #'filter-potential-nans-and-infinities ylog) ylist)))
                        (vector (vector-group-min ys)
                                (vector-group-max ys))))
                 ))
@@ -346,7 +346,7 @@
                                                  ((:sw :s :se) :baseline)))
                                       (mask (and clip
                                                  (adjust-box
-                                                  (mapcar (um:expanded-curry (v) #'* sf)
+                                                  (mapcar (expanded-curry (v) #'* sf)
                                                           (plotter-box pane))
                                                   )))
                                       (color (adjust-color pane color alpha)))
