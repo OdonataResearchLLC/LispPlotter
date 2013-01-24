@@ -108,5 +108,4 @@
 
 (defun filter-potential-nans-and-infinities (xs islog)
   ;; remove values from the sequence if they are nans or infinities
-  (remove-if (complement (um:rcurry #'acceptable-value islog)) xs))
-
+  (remove-if (complement (rcurry #'acceptable-value islog)) xs))
