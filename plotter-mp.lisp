@@ -86,19 +86,17 @@
     (let* ((prev-ct (plotter-delayed-update pane))
            (changed (when (zerop prev-ct)
                       ;; this also clears the changed indication
-                      (um:changed-p (plotter-display-list pane)))))
+                      (changed-p (plotter-display-list pane)))))
       (incf (plotter-delayed-update pane))
       (unwind-protect
           (prog1
               (funcall fn)
             (when (and (zerop prev-ct)
                        (or changed
-                           (um:changed-p (plotter-display-list pane)))
+                           (changed-p (plotter-display-list pane)))
                        (setf (plotter-dirty pane) t)
                        (sync-with-capi pane 'redraw-entire-pane pane)))
-            (decf (plotter-delayed-update pane))
-            ))
-      )))
+            (decf (plotter-delayed-update pane)))))))
 #|
 ;; test delayed updates -- entire composite plot should appear at one time
 (let ((win (plt:wset 'myplot)))
@@ -162,6 +160,3 @@
     
 (defmacro wait-until-finished ((pane &key mbox timeout) &body body)
   `(do-wait-until-finished ,pane ,mbox ,timeout (lambda () ,@body)))
-
-
-
