@@ -111,33 +111,36 @@
   (let* (xprev
          yprev
          last-x
-         (wd    (* 0.1 (gp:port-width port)))     ;; default for only one data point
-         (wd/2  (* 0.5 wd)))
-    (loop for pair = (next-item pairs)
-          while pair
-          do
-          (let ((x (aref pair 0))
-                (y (aref pair 1)))
-            (when xprev
-              (setf wd   (abs (- x xprev))
-                    wd/2 (* 0.5 wd))
-              (unless (= y yprev)
-                (let ((next-x (- x wd/2)))
-                  (gp:draw-polygon port
-                                   (list (or last-x (- xprev wd/2)) yprev
-                                         next-x yprev
-                                         next-x y)
-                                   :closed nil)
-                  (setf last-x next-x)
-                  )))
-            (setf xprev x
-                  yprev y))
-          finally
-          (when xprev
-            (gp:draw-line port
-                          (or last-x (- xprev wd/2)) yprev
-                          (+ xprev wd/2) yprev))
-          )))
+         ;; default for only one data point
+         (wd (* 0.1 (gp:port-width port)))
+         (wd/2 (* 0.5 wd)))
+    (loop
+     for pair = (next-item pairs)
+     while pair do
+     (let ((x (aref pair 0))
+           (y (aref pair 1)))
+       (when xprev
+         (setf
+          wd (abs (- x xprev))
+          wd/2 (* 0.5 wd))
+         (unless (= y yprev)
+           (let ((next-x (- x wd/2)))
+             (gp:draw-polygon
+              port
+              (list
+               (or last-x (- xprev wd/2))
+               yprev next-x yprev next-x y)
+              :closed nil)
+             (setf last-x next-x))))
+       (setf
+        xprev x
+        yprev y))
+     finally
+     (when xprev
+       (gp:draw-line
+        port
+        (or last-x (- xprev wd/2)) yprev
+        (+ xprev wd/2) yprev)))))
 
 (defmethod draw-polyline (port (pairs <pair-scanner>))
   (let (xprev yprev)
