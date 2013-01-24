@@ -1,26 +1,17 @@
 
 (in-package :plotter)
 
-;; ------------------------------------------
-;; Convenience macros
+;;; Convenience macros
 
 (defmacro with-color ((pane color) &body body)
-  `(gp:with-graphics-state
-       (,pane
-        :foreground ,color)
+  `(gp:with-graphics-state (,pane :foreground ,color)
      ,@body))
   
 (defmacro with-mask ((pane mask) &body body)
-  `(gp:with-graphics-state
-       (,pane
-        :mask ,mask)
+  `(gp:with-graphics-state (,pane :mask ,mask)
      ,@body))
 
 ;;; Useful macros
-
-(defun rcurry (fn &rest suf-args)
-  (lambda (&rest pref-args)
-    (apply fn (nconc pref-args suf-args))))
 
 (defun raw-mkstr (&rest args)
   (with-output-to-string (s)
@@ -57,11 +48,11 @@
      (funcall ,f ,@pref-args ,@suf-args)))
 
 (defun foldl (fn init seq)
-  ;; fn should be a function of (accum item)
+  "fn should be a function of (accum item)"
   (reduce fn seq :initial-value init))
 
 (defun foldr (fn seq init)
-  ;; fn should be a function of (item accum)
+  "fn should be a function of (item accum)"
   (reduce fn seq :from-end t :initial-value init))
 
 (defun compose (&rest fns)
