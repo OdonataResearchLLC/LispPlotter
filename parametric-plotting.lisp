@@ -31,17 +31,15 @@
          (xs  (plot-arg-vals xparms))
          (ys  (plot-arg-vals yparms))
          
-         (xfn (um:curry #'real-eval-with-nans
-                        (um:compose (plot-arg-prepfn xparms)
-                                    xfn
-                                    (plot-arg-iprepfn tparms))
-                        ))
+         (xfn (curry #'real-eval-with-nans
+                     (compose (plot-arg-prepfn xparms)
+                              xfn
+                              (plot-arg-iprepfn tparms))))
          
-         (yfn (um:curry #'real-eval-with-nans
-                        (um:compose (plot-arg-prepfn yparms)
-                                    yfn
-                                    (plot-arg-iprepfn tparms))
-                        )))
+         (yfn (curry #'real-eval-with-nans
+                     (compose (plot-arg-prepfn yparms)
+                              yfn
+                              (plot-arg-iprepfn tparms)))))
     
     (labels ((midpt (v1 v2)
                (* 0.5d0 (+ v1 v2)))
@@ -142,8 +140,8 @@
 
         (compute-adaptive-values xfn yfn tparms xparms yparms))
     
-    (let ((xs (mapcar (um:curry #'real-eval-with-nans (plot-arg-iprepfn xparms)) xs-raw))
-          (ys (mapcar (um:curry #'real-eval-with-nans (plot-arg-iprepfn yparms)) ys-raw)))
+    (let ((xs (mapcar (curry #'real-eval-with-nans (plot-arg-iprepfn xparms)) xs-raw))
+          (ys (mapcar (curry #'real-eval-with-nans (plot-arg-iprepfn yparms)) ys-raw)))
       
       (apply plotfn pane xs ys args)
       (list (length xs) xs ys) ;; for voyueristic pleasure
@@ -168,8 +166,8 @@
 (defun fill-in-estimated-range (parms)
   "Estimate the range of the function"
   (let* ((vs    (filter-nans-and-infinities (plot-arg-vals parms)))
-         (vsmin (vmin vs))
-         (vsmax (vmax vs)))
+         (vsmin (vmin-of vs))
+         (vsmax (vmax-of vs)))
     (setf (plot-arg-min parms) (min vsmin vsmax)
           (plot-arg-max parms) (if (= vsmin vsmax)
                                    (if (zerop vsmin)
@@ -182,8 +180,8 @@
 (defun fill-in-computed-vals (parms fn tparms)
   "Set up the computed values in the plot-arg structure"
   (setf (plot-arg-vals parms)
-        (mapcar (um:curry #'real-eval-with-nans
-                          (um:compose (plot-arg-prepfn parms) fn (plot-arg-iprepfn tparms)))
+        (mapcar (curry #'real-eval-with-nans
+                       (compose (plot-arg-prepfn parms) fn (plot-arg-iprepfn tparms)))
                 (plot-arg-vals tparms))
         ))
 
