@@ -1,73 +1,45 @@
 
 (in-package :plotter)
 
-;; ------------------------------------------
-;; generalized operators to accommodate <carrays> and others
-;;
+;;; Generalized operators
 
-;; -------------------------------------------------------------------
-(defmethod coerce-to-vector ((v vector))
-  v)
+(defgeneric coerce-to-vector (object)
+  (:method ((object vector)) object)
+  (:method ((object list)) (coerce object 'vector))
+  (:method ((object array))
+   (make-array (array-total-size object)
+               :element-type (array-element-type object)
+               :displaced-to object))
+  (:documentation
+   "Create a vector from the object."))
 
-(defmethod coerce-to-vector ((lst list))
-  (coerce lst 'vector))
+;;; FIXME: Shadow LENGTH
+(defgeneric length-of (object)
+  (:method (object) (length object))
+  (:method ((object array)) (array-total-size object))
+  (:documentation
+   "Return the length of the object, total-size of arrays."))
 
-(defmethod coerce-to-vector ((a array))
-  (make-array (array-total-size a)
-              :element-type (array-element-type a)
-              :displaced-to a))
+;;; FIXME: Rename vmax
+(defgeneric vmax-of (object)
+  (:method ((object vector))
+   (loop for item across object maximize item))
+  (:method ((object list))
+   (loop for item in object maximize item))
+  (:method ((object array))
+   (loop for item below (array-total-size object)
+         maximize (row-major-aref object item)))
+  (:documentation
+   "Return the maximum item of the object."))
 
-;;---------
-(defmethod length-of (arg)
-  (length arg))
-
-(defmethod length-of ((arg array))
-  (array-total-size arg))
-
-;;---------
-(defmethod vmax-of ((arg vector))
-  (loop for item across arg maximize item))
-
-(defmethod vmax-of ((arg list))
-  (loop for item in arg maximize item))
-
-(defmethod vmax-of ((arg array))
-  (loop for ix from 0 below (array-total-size arg)
-        maximize (row-major-aref arg ix)))
-
-;;---------
-(defmethod vmin-of ((arg vector))
-  (loop for item across arg minimize item))
-
-(defmethod vmin-of ((arg list))
-  (loop for item in arg minimize item))
-
-(defmethod vmin-of ((arg array))
-  (loop for ix from 0 below (array-total-size arg)
-        minimize (row-major-aref arg ix)))
-
-;;---------
-(defmethod array-total-size-of (arg)
-  (array-total-size arg))
-
-;;---------
-(defmethod array-dimension-of (arg n)
-  (array-dimension arg n))
-
-;;---------
-(defmethod aref-of (arg &rest indices)
-  (apply #'aref arg indices))
-
-;;---------
-(defmethod subseq-of (arg start &optional end)
-  (subseq arg start end))
-
-(defmethod subseq-of ((arg array) start &optional end)
-  (let* ((limit (array-total-size arg))
-         (nel   (- (or end limit) start))
-         (ans   (make-array nel :element-type (array-element-type arg))))
-    (loop for ix from start below (or end limit)
-          for jx from 0
-          do
-          (setf (aref ans jx) (row-major-aref arg ix)))
-    ans))
+;;; FIXME: Rename vmin
+(defgeneric vmin-of (object)
+  (:method ((object vector))
+   (loop for item across object minimize item))
+  (:method ((object list))
+   (loop for item in object minimize item))
+  (:method ((object array))
+   (loop for item below (array-total-size object)
+         minimize (row-major-aref object item)))
+  (:documentation
+   "Return the minimum item of the object."))
