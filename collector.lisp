@@ -1,15 +1,11 @@
-;; collector.lisp
-;; --------------------------------------------------------------
-;; Define our own collector objects that perform rapid nconc list
-;; accumulation
-;;
-;; DM/RAL 02/07 -- added a Lock for MP safety
+
+;;; Collector objects that perform rapid nconc list accumulation
 
 (in-package :plotter)
 
 (defclass <collector> ()
-  ((hd   :accessor collector-hd)
-   (tl   :accessor collector-tl)))
+  ((hd :accessor collector-hd)
+   (tl :accessor collector-tl)))
 
 (defmethod collector-discard-contents ((c <collector>))
   (let ((v (list nil)))
@@ -66,16 +62,15 @@
 (defun make-collector ()
   (make-instance '<collector>))
 
-;; -------------------------------------------------
+;;; Monitored collector
 
 (defclass <monitored-collector-mixin> ()
-  ((changed  :accessor monitored-collector-mixin-changed :initform nil)))
+  ((changed :accessor monitored-collector-mixin-changed :initform nil)))
 
 (defmethod changed-p ((m <monitored-collector-mixin>))
-  ;; asking if changed also resets the monitor
+  "Asking if changed also resets the monitor"
   (shiftf (monitored-collector-mixin-changed m) nil))
 
-;; ---------------------------------------------------
 (defclass <monitored-collector> (<monitored-collector-mixin>
                                  <collector>)
   ())
@@ -101,22 +96,13 @@
 (defun make-monitored-collector ()
   (make-instance '<monitored-collector>))
 
+;;; Multi-processor safe collector
 
-;; ----------------------------------------------------------
 (defclass <mpsafe-collector-mixin> ()
-  ((lock :accessor mpsafe-lock
-         :initform (mp:make-lock :name "MPSafe Mixin Lock"))))
+  ((lock
+    :accessor mpsafe-lock
+    :initform (mp:make-lock :name "MPSafe Mixin Lock"))))
 
-(defmacro with-locked-instance ((m &rest lock-args) &body body)
-  `(#+:LISPWORKS mp:with-lock
-    #+:ALLEGRO   mp:with-process-lock
-    #+:CLOZURE   ccl:with-lock-grabbed
-    #+:SBCL      sb-thread:with-recursive-lock
-		 ((mpsafe-lock ,m)
-		  ,@lock-args)
-     ,@body))
-
-;; ----------------------------------------------------------
 (defclass <mpsafe-collector> (<mpsafe-collector-mixin>
                               <collector>)
   ())
@@ -127,35 +113,35 @@
   ())
 
 (defmethod collector-discard-contents :around ((c <mpsafe-collector-mixin>))
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
 
 (defmethod collector-stuff-contents :around ((c <mpsafe-collector-mixin>) lst)
   (declare (ignore lst))
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
 
 (defmethod collector-contents :around ((c <mpsafe-collector-mixin>)
                                        &key &allow-other-keys)
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
     
 (defmethod collector-ncontents :around ((c <mpsafe-collector-mixin>))
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
 
 (defmethod collector-append-item :around ((c <mpsafe-collector-mixin>) item)
   (declare (ignore item))
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
 
 (defmethod collector-push-item :around ((c <mpsafe-collector-mixin>) item)
   (declare (ignore item))
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
 
 (defmethod collector-pop :around ((c <mpsafe-collector-mixin>))
-  (with-locked-instance (c)
+  (mp:with-lock ((mpsafe-lock c))
     (call-next-method)))
 
 (defun make-mpsafe-collector ()
@@ -163,5 +149,3 @@
 
 (defun make-mpsafe-monitored-collector ()
   (make-instance '<mpsafe-monitored-collector>))
-
-;; ------------------------------------------------
