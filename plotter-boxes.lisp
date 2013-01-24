@@ -1,14 +1,13 @@
 
 (in-package :plotter)
 
-;; ------------------------------------------
-(defun inset-box-sides (box dxleft dytop 
-                            &optional (dxright dxleft)
-                                      (dybottom dytop))
-  (list (+ (gp:rectangle-left   box) dxleft)
-        (+ (gp:rectangle-top    box) dytop)
-        (- (gp:rectangle-right  box) dxright)
-        (- (gp:rectangle-bottom box) dybottom)))
+(defun inset-box-sides (box dxleft dytop &optional
+                        (dxright dxleft) (dybottom dytop))
+  (list
+   (+ (gp:rectangle-left   box) dxleft)
+   (+ (gp:rectangle-top    box) dytop)
+   (- (gp:rectangle-right  box) dxright)
+   (- (gp:rectangle-bottom box) dybottom)))
 
 (defmacro box-left (box)
   `(gp:rectangle-left ,box))
@@ -47,4 +46,3 @@
   (let ((gbx (gensym)))
     `(let ((,gbx ,box))
        (list (box-right ,gbx) (box-bottom ,gbx)))))
-
