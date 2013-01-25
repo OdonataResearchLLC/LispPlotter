@@ -156,128 +156,126 @@
           xprev x
           yprev y))))))
 
-;; ----------------------------------------------------------  
-
 (defun get-symbol-plotfn (port sf symbol-style)
   (labels ((draw-symbol (fn)
              #+:COCOA
-             (with-color (port (or (if (fill-color symbol-style)
-                                     (adjust-color port
-                                                   (fill-color symbol-style)
-                                                   (fill-alpha symbol-style)))
-                                   #.(color:make-gray 1.0 0.25)))
+             (with-color (port
+                          (or
+                           (when (fill-color symbol-style)
+                             (adjust-color
+                              port
+                              (fill-color symbol-style)
+                              (fill-alpha symbol-style)))
+                           #.(color:make-gray 1.0 0.25)))
                (funcall fn t))
              #+:WIN32
              (when (fill-color symbol-style)
-               (with-color (port (adjust-color port
-                                               (fill-color symbol-style)
-                                               (fill-alpha symbol-style)))
+               (with-color (port (adjust-color
+                                  port
+                                  (fill-color symbol-style)
+                                  (fill-alpha symbol-style)))
                  (funcall fn t)))
              (gp:with-graphics-state (port
-                                      :thickness  (adjust-linewidth (* sf (border-thick symbol-style)))
-                                      :foreground (adjust-color port
-                                                                (border-color symbol-style)
-                                                                (border-alpha symbol-style)))
+                                      :thickness
+                                      (adjust-linewidth
+                                       (* sf (border-thick symbol-style)))
+                                      :foreground
+                                      (adjust-color
+                                       port
+                                       (border-color symbol-style)
+                                       (border-alpha symbol-style)))
                (funcall fn))))
-    
     (ecase (plot-symbol symbol-style)
-      (:cross     (lambda (x y)
-                    (gp:with-graphics-state (port
-                                             :thickness  (adjust-linewidth (* sf (border-thick symbol-style)))
-                                             :foreground (adjust-color port
-                                                                       (border-color symbol-style)
-                                                                       (border-alpha symbol-style)))
-                      (gp:draw-line port (- x 3) y (+ x 3) y)
-                      (gp:draw-line port x (- y 3) x (+ y 3))
-                      )))
-      
-      (:x         (lambda (x y)
-                    (gp:with-graphics-state (port
-                                             :thickness  (adjust-linewidth (* sf (border-thick symbol-style)))
-                                             :foreground (adjust-color port
-                                                                       (border-color symbol-style)
-                                                                       (border-alpha symbol-style)))
-                      (gp:draw-line port (- x 3) (- y 3) (+ x 3) (+ y 3))
-                      (gp:draw-line port (+ x 3) (- y 3) (- x 3) (+ y 3))
-                      )))
-      
+      (:cross
+       (lambda (x y)
+         (gp:with-graphics-state (port
+                                  :thickness
+                                  (adjust-linewidth
+                                   (* sf (border-thick symbol-style)))
+                                  :foreground
+                                  (adjust-color
+                                   port
+                                   (border-color symbol-style)
+                                   (border-alpha symbol-style)))
+           (gp:draw-line port (- x 3) y (+ x 3) y)
+           (gp:draw-line port x (- y 3) x (+ y 3)))))
+      (:x
+       (lambda (x y)
+         (gp:with-graphics-state (port
+                                  :thickness
+                                  (adjust-linewidth
+                                   (* sf (border-thick symbol-style)))
+                                  :foreground
+                                  (adjust-color
+                                   port
+                                   (border-color symbol-style)
+                                   (border-alpha symbol-style)))
+           (gp:draw-line port (- x 3) (- y 3) (+ x 3) (+ y 3))
+           (gp:draw-line port (+ x 3) (- y 3) (- x 3) (+ y 3)))))
       ((:circle :sampled-data)
        (lambda (x y)
          (labels ((draw-circle (&optional filled)
-                    (gp:draw-circle port
-                                    x 
-                                    #+:COCOA (- y 0.5)
-                                    #+:WIN32 y
-                                    3
-                                    :filled filled)))
-           (draw-symbol #'draw-circle)
-           )))
-
+                    (gp:draw-circle
+                     port x #+:COCOA (- y 0.5) #+:WIN32 y 3
+                     :filled filled)))
+           (draw-symbol #'draw-circle))))
       ((:box :square)
        (lambda (x y)
          (labels ((draw-rectangle (&optional filled)
-                    (gp:draw-rectangle port (- x 3) (- y 3) 6 6
-                                       :filled filled)))
-           (draw-symbol #'draw-rectangle)
-           )))
-
+                    (gp:draw-rectangle
+                     port (- x 3) (- y 3) 6 6 :filled filled)))
+           (draw-symbol #'draw-rectangle))))
       ((:triangle :up-triangle)
        (lambda (x y)
          (labels ((draw-triangle (&optional filled)
-                    (gp:draw-polygon port
-                                     (list (- x 3) (+ y 3)
-                                           x (- y 4)
-                                           (+ x 3) (+ y 3))
-                                     :closed t
-                                     :filled filled)))
-           (draw-symbol #'draw-triangle)
-           )))
-      
+                    (gp:draw-polygon
+                     port
+                     (list (- x 3) (+ y 3)
+                           x (- y 4)
+                           (+ x 3) (+ y 3))
+                     :closed t
+                     :filled filled)))
+           (draw-symbol #'draw-triangle))))
       (:down-triangle
        (lambda (x y)
          (labels ((draw-triangle (&optional filled)
-                    (gp:draw-polygon port
-                                     (list (- x 3) (- y 3)
-                                           x (+ y 4)
-                                           (+ x 3) (- y 3))
-                                     :closed t
-                                     :filled filled)))
-           (draw-symbol #'draw-triangle)
-           )))
-      
+                    (gp:draw-polygon
+                     port
+                     (list (- x 3) (- y 3)
+                           x (+ y 4)
+                           (+ x 3) (- y 3))
+                     :closed t
+                     :filled filled)))
+           (draw-symbol #'draw-triangle))))
       (:right-triangle
        (lambda (x y)
          (labels ((draw-triangle (&optional filled)
-                    (gp:draw-polygon port
-                                     (list (- x 3) (- y 3)
-                                           (+ x 4) y
-                                           (- x 3) (+ y 3))
-                                     :closed t
-                                     :filled filled)))
-           (draw-symbol #'draw-triangle)
-           )))
-      
+                    (gp:draw-polygon
+                     port
+                     (list (- x 3) (- y 3)
+                           (+ x 4) y
+                           (- x 3) (+ y 3))
+                     :closed t
+                     :filled filled)))
+           (draw-symbol #'draw-triangle))))
       (:left-triangle
        (lambda (x y)
          (labels ((draw-triangle (&optional filled)
-                    (gp:draw-polygon port
-                                     (list (+ x 3) (- y 3)
-                                           (- x 4) y
-                                           (+ x 3) (+ y 3))
-                                     :closed t
-                                     :filled filled)))
-           (draw-symbol #'draw-triangle)
-           )))
-
+                    (gp:draw-polygon
+                     port
+                     (list (+ x 3) (- y 3)
+                           (- x 4) y
+                           (+ x 3) (+ y 3))
+                     :closed t
+                     :filled filled)))
+           (draw-symbol #'draw-triangle))))
       (:dot
        (lambda (x y)
-         (with-color (port (adjust-color port
-                                         (border-color symbol-style)
-                                         (border-alpha symbol-style)))
-           (gp:draw-circle port x (1- y) 0.5))
-         ))
-      )))
-
+         (with-color (port (adjust-color
+                            port
+                            (border-color symbol-style)
+                            (border-alpha symbol-style)))
+           (gp:draw-circle port x (1- y) 0.5)))))))
 
 (defmethod unsafe-pw-plot-xv-yv ((cpw <plotter-mixin>) port xvector yvector 
                           &key
