@@ -548,7 +548,6 @@
                  (gp:draw-rectangle
                   port (- x (/ bar-width 2)) o bar-width (- c o))))))))))
 
-;;-------------------------------------------------------------------
 (defmethod unsafe-pw-plot-bars-xv-yv ((cpw <plotter-mixin>) port xvector yvectors 
                           &key
                           (color #.(color:make-rgb 0.0 0.5 0.0))
@@ -564,71 +563,67 @@
                           &allow-other-keys)
   ;; this is the base bar-plotting routine
   ;; called only from within the pane process
-  (let* ((sf        (plotter-sf  cpw))
-         (box       (let ((box (plotter-box cpw)))
-                      (adjust-box
-                       (list (1+ (* sf (box-left box)))
-                             (* sf (box-top box))
-                             (1- (* sf (box-width box)))
-                             (* sf (box-height box))))
-                      ))
-         (xform     (plotter-xform cpw))
-         (color     (adjust-color cpw color alpha))
+  (let* ((sf (plotter-sf  cpw))
+         (box
+          (let ((box (plotter-box cpw)))
+            (adjust-box
+             (list (1+ (* sf (box-left box)))
+                   (* sf (box-top box))
+                   (1- (* sf (box-width box)))
+                   (* sf (box-height box))))))
+         (xform (plotter-xform cpw))
+         (color (adjust-color cpw color alpha))
          (neg-color (adjust-color cpw neg-color alpha))
          (linewidth (adjust-linewidth (* sf linewidth)))
-
-         (nel       (let ((nely (reduce #'min (mapcar #'length-of yvectors))))
-                      (if xvector
-                          (min (length-of xvector) nely)
-                        nely)))
-         
-         (xs        (let* ((xform   (lambda (x)
-                                      (gp:transform-point xform x 0)))
-                           (scanner (make-scanner (or xvector
-                                                      nel)
-                                                  :max-items nel)))
-                      (make-transformer scanner
-                                        (if (plotter-xlog cpw)
-                                            (compose xform #'log10)
-                                          xform))
-                      ))
-
-         (xform-y   (lambda (y)
-                      (second (multiple-value-list
-                               (gp:transform-point xform 0 y)))
-                      ))
-
-         (ys        (let* ((scanners (mapcar #'make-scanner yvectors)))
-                      (mapcar (rcurry #'make-transformer
-                                      (if (plotter-ylog cpw)
-                                          (compose xform-y #'log10)
-                                          xform-y))
-                              scanners)
-                      ))
-         (c<o-testfn (let ((y1 (funcall xform-y 0))
-                           (y2 (funcall xform-y 1)))
-                       (if (< y2 y1)
-                           #'>
-                         #'<)))
-         (plotfn (get-bar-symbol-plotfn port symbol
-                                        color neg-color bar-width
-                                        c<o-testfn))
-         (tmp       (make-array (length ys))))
-    
+         (nel
+          (let ((nely (reduce #'min (mapcar #'length-of yvectors))))
+            (if xvector
+                (min (length-of xvector) nely)
+                nely)))
+         (xs
+          (let* ((xform
+                  (lambda (x)
+                    (gp:transform-point xform x 0)))
+                 (scanner
+                  (make-scanner (or xvector nel) :max-items nel)))
+            (make-transformer
+             scanner
+             (if (plotter-xlog cpw)
+                 (compose xform #'log10)
+                 xform))))
+         (xform-y
+          (lambda (y)
+            (second
+             (multiple-value-list (gp:transform-point xform 0 y)))))
+         (ys
+          (let* ((scanners (mapcar #'make-scanner yvectors)))
+            (mapcar
+             (rcurry
+              #'make-transformer
+              (if (plotter-ylog cpw)
+                  (compose xform-y #'log10)
+                  xform-y))
+             scanners)))
+         (c<o-testfn
+          (let ((y1 (funcall xform-y 0))
+                (y2 (funcall xform-y 1)))
+            (if (< y2 y1) #'> #'<)))
+         (plotfn
+          (get-bar-symbol-plotfn
+           port symbol color neg-color bar-width c<o-testfn))
+         (tmp (make-array (length ys))))
     (gp:with-graphics-state (port
-                             :thickness  linewidth
+                             :thickness linewidth
                              :foreground color
-                             :line-end-style   :butt
+                             :line-end-style :butt
                              :line-joint-style :miter
-                             :mask       box)
-      
+                             :mask box)
       (gp:with-graphics-scale (port sf sf)
-        (loop for x = (next-item xs)
-              while x
-              do
-              (map-into tmp #'next-item ys)
-              (funcall plotfn x tmp)))
-      )))
+        (loop
+         for x = (next-item xs)
+         while x do
+         (map-into tmp #'next-item ys)
+         (funcall plotfn x tmp))))))
 
 (defmethod pw-plot-bars-xv-yv ((cpw <plotter-mixin>) port xvector yvectors &rest args)
   (ignore-errors
