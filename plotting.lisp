@@ -1,54 +1,56 @@
 
-(in-package :plt)
-
-;; ----------------------------------
+(in-package :plotter)
 
 (defclass colorpatch (capi:drawn-pinboard-object)
-  ((cp-color   :accessor cp-color   :initarg :color  :initform :black))
+  ((cp-color
+    :initarg :color
+    :accessor cp-color))
   (:default-initargs
    :display-callback 'draw-colorpatch
    :x       0
    :y       0
    :width  32
-   :height 16))
+   :height 16
+   :color :black))
 
 (defmethod draw-colorpatch (pane (self colorpatch) x y width height)
-  (gp:draw-rectangle pane x y width height
-                     :foreground (cp-color self)
-                     :filled t)
-  (gp:draw-rectangle pane x y width height
-                     :foreground :black))
-
-;; ----------------------------------
+  (gp:draw-rectangle
+   pane x y width height
+   :foreground (cp-color self)
+   :filled t)
+  (gp:draw-rectangle
+   pane x y width height
+   :foreground :black))
 
 (capi:define-interface colorpatch-text-input-pane ()
   ()
   (:panes
-   (patch colorpatch
-          :color :black
-          :accessor patch)
-   (textpane capi:text-input-pane
-             :text ":BLACK"
-             :completion-function 'color-completion-callback
-             :buttons '(:ok nil
-                        :completion t)
-             :accessor textpane)
-   )
+   (patch
+    colorpatch
+    :color :black
+    :accessor patch)
+   (textpane
+    capi:text-input-pane
+    :text ":BLACK"
+    :completion-function 'color-completion-callback
+    :buttons '(:ok nil
+               :completion t)
+    :accessor textpane))
   (:layouts
-   (colorpatch-layout capi:pinboard-layout
-                      '(patch)
-                      :visible-min-width  33
-                      :visible-max-width  33
-                      :visible-min-height 17
-                      :visible-max-height 17)
-   (main-layout capi:row-layout
-                '(colorpatch-layout
-                  textpane)
-                :adjust :center))
+   (colorpatch-layout
+    capi:pinboard-layout
+    '(patch)
+    :visible-min-width  33
+    :visible-max-width  33
+    :visible-min-height 17
+    :visible-max-height 17)
+   (main-layout
+    capi:row-layout
+    '(colorpatch-layout textpane)
+    :adjust :center))
   (:default-initargs
    :layout 'main-layout
    :title  "ColorPatch Selector"))
-
 
 (defun color-completion-callback (widget data)
   (multiple-value-bind (new-color success)
@@ -61,17 +63,17 @@
           (setf (cp-color cp) new-color)
           (gp:invalidate-rectangle (capi:pinboard-object-pinboard cp))
           new-text)
-      data)))
+        data)))
 
 (defmethod set-colorpatch-color ((widget colorpatch-text-input-pane) color)
-  (setf (cp-color (patch widget)) color
-        (capi:text-input-pane-text (textpane widget)) (format nil "~S" color)))
+  (setf
+   (cp-color (patch widget)) color
+   (capi:text-input-pane-text (textpane widget)) (format nil "~S" color)))
 
 (defmethod get-colorpatch-color ((widget colorpatch-text-input-pane))
-  (values (cp-color (patch widget))
-          (capi:text-input-pane-text (textpane widget))))
-
-;; ----------------------------------------------
+  (values
+   (cp-color (patch widget))
+   (capi:text-input-pane-text (textpane widget))))
 
 (defvar *plot-style*
   '(:thick 2))
@@ -81,95 +83,98 @@
     :domain  (0 1)))
 
 (capi:define-interface axis-property-sheet ()
-    ()
+  ()
   (:panes
-   (plot-title capi:text-input-pane
-               :title "Plot Title"
-               :text  "A Plot of Y vs X"
-               :accessor plot-title)
-   #|(domain capi:text-input-pane
-                :title "Domain (min,max)"
-                :text "(0 1)"
-                :accessor domain)|#
-   (plot-fn capi:text-input-pane
-       :title "Function"
-       :text  "plt::sinc"
-       :accessor plot-fn)
-   (x-title capi:text-input-pane
-            :title "Title"
-            :text "X Values"
-            :visible-min-width 200
-            :accessor x-title)
-   (y-title capi:text-input-pane
-            :title "Title"
-            :text "Y Values"
-            :visible-min-width 200
-            :accessor y-title)
-   (x-log capi:radio-button-panel
-          :title "Style"
-          :items '(:linear :log)
-          :print-function 'string-capitalize
-          :layout-class 'capi:row-layout
-          :accessor x-log)
-   (y-log capi:radio-button-panel
-          :title "Style"
-          :items '(:linear :log)
-          :print-function 'string-capitalize
-          :layout-class 'capi:row-layout
-          :accessor y-log)
-   #|(x-scale capi:text-input-pane
-            :title "Scaling"
-            :text  "1.0"
-            :accessor x-scale)|#
-   (x-min capi:text-input-pane
-           :title "Min"
-           :accessor x-min)
-   (x-max  capi:text-input-pane
-           :title "Max"
-           :accessor x-max)
-   (y-min capi:text-input-pane
-           :title "Min"
-           :accessor y-min)
-   (y-max capi:text-input-pane
-         :title "Max"
-         :accessor y-max)
-   #|(y-scale capi:text-input-pane
-            :title "Scaling"
-            :text "1.0"
-            :accessor y-scale)|#
-   (bg-color colorpatch-text-input-pane
-             :title "Background"
-             :accessor bg-color)
-   (fg-color colorpatch-text-input-pane
-             :title "Foreground"
-             :accessor fg-color)
-   (ok-button capi:push-button
-              :text "OK"
-              :default-p t
-              :visible-min-width 100
-              :callback 'exit-axis-dialog)
-   (cancel-button capi:push-button
-                  :text "Cancel"
-                  :visible-min-width 100
-                  :callback (lambda (item intf)
-                              (declare (ignore item))
-                              (capi:destroy intf)))
-   (style  capi:text-input-pane
-           :title "Plot style"
-           :text  "(:thick 2)"
-           :accessor style)
-   (grid capi:check-button
-          :title "Grid"
-          :text ""
-          :accessor grid)
-   )
+   (plot-title
+    capi:text-input-pane
+    :title "Plot Title"
+    :text  "A Plot of Y vs X"
+    :accessor plot-title)
+   (plot-fn
+    capi:text-input-pane
+    :title "Function"
+    :text  "plt::sinc"
+    :accessor plot-fn)
+   (x-title
+    capi:text-input-pane
+    :title "Title"
+    :text "X Values"
+    :visible-min-width 200
+    :accessor x-title)
+   (y-title
+    capi:text-input-pane
+    :title "Title"
+    :text "Y Values"
+    :visible-min-width 200
+    :accessor y-title)
+   (x-log
+    capi:radio-button-panel
+    :title "Style"
+    :items '(:linear :log)
+    :print-function 'string-capitalize
+    :layout-class 'capi:row-layout
+    :accessor x-log)
+   (y-log
+    capi:radio-button-panel
+    :title "Style"
+    :items '(:linear :log)
+    :print-function 'string-capitalize
+    :layout-class 'capi:row-layout
+    :accessor y-log)
+   (x-min
+    capi:text-input-pane
+    :title "Min"
+    :accessor x-min)
+   (x-max
+    capi:text-input-pane
+    :title "Max"
+    :accessor x-max)
+   (y-min
+    capi:text-input-pane
+    :title "Min"
+    :accessor y-min)
+   (y-max
+    capi:text-input-pane
+    :title "Max"
+    :accessor y-max)
+   (bg-color
+    colorpatch-text-input-pane
+    :title "Background"
+    :accessor bg-color)
+   (fg-color
+    colorpatch-text-input-pane
+    :title "Foreground"
+    :accessor fg-color)
+   (ok-button
+    capi:push-button
+    :text "OK"
+    :default-p t
+    :visible-min-width 100
+    :callback 'exit-axis-dialog)
+   (cancel-button
+    capi:push-button
+    :text "Cancel"
+    :visible-min-width 100
+    :callback
+    (lambda (item intf)
+      (declare (ignore item))
+      (capi:destroy intf)))
+   (style
+    capi:text-input-pane
+    :title "Plot style"
+    :text  "(:thick 2)"
+    :accessor style)
+   (grid
+    capi:check-button
+    :title "Grid"
+    :text ""
+    :accessor grid))
   (:layouts
    (bgfg-row
     capi:row-layout
     '(bg-color
       fg-color)
-    :background (color:make-gray 0.75)
-    )
+    :background (color:make-gray 0.75))
    (x-minmax
     capi:row-layout
     '(x-min x-max))
@@ -210,12 +215,10 @@
     '(title-row
       bgfg-row
       axis-row
-      button-row))
-   )
+      button-row)))
   (:default-initargs
    :layout 'main-layout
-   :title  "Function Plotting"
-   ))
+   :title  "Function Plotting"))
 
 (defun make-axis-property-dialog (&key
                                   xlog
@@ -233,34 +236,27 @@
                                   ;; continuation
                                   &allow-other-keys)
   (let ((intf (make-instance 'axis-property-sheet)))
-    (setf (capi:choice-selected-item (x-log intf)) (if xlog :log :linear)
-          (capi:choice-selected-item (y-log intf)) (if ylog :log :linear)
-          (capi:text-input-pane-text (plot-title intf)) title
-          (capi:text-input-pane-text (x-title intf)) xtitle
-          (capi:text-input-pane-text (y-title intf)) ytitle
-          (capi:text-input-pane-text (x-min intf)) (if xrange
-                                                     (format nil "~A" (elt xrange 0))
-                                                     "")
-          (capi:text-input-pane-text (x-max intf)) (if xrange
-                                                     (format nil "~A" (elt xrange 1))
-                                                     "")
-          (capi:text-input-pane-text (y-min intf)) (if yrange
-                                                     (format nil "~A" (elt yrange 0))
-                                                     "")
-          (capi:text-input-pane-text (y-max intf)) (if yrange
-                                                     (format nil "~A" (elt yrange 1))
-                                                     "")
-          (capi:text-input-pane-text (plot-fn intf)) (format nil "~S" plot-fn)
-          ;; (capi:text-input-pane-text (domain intf))  (format nil "~S" domain)
-          (capi:text-input-pane-text (style intf))   (format nil "~S" *plot-style*)
-          (capi:button-selected (grid intf))         fullgrid
-          )
+    (setf
+     (capi:choice-selected-item (x-log intf)) (if xlog :log :linear)
+     (capi:choice-selected-item (y-log intf)) (if ylog :log :linear)
+     (capi:text-input-pane-text (plot-title intf)) title
+     (capi:text-input-pane-text (x-title intf)) xtitle
+     (capi:text-input-pane-text (y-title intf)) ytitle
+     (capi:text-input-pane-text (x-min intf))
+     (if xrange (format nil "~A" (elt xrange 0)) "")
+     (capi:text-input-pane-text (x-max intf))
+     (if xrange (format nil "~A" (elt xrange 1)) "")
+     (capi:text-input-pane-text (y-min intf))
+     (if yrange (format nil "~A" (elt yrange 0)) "")
+     (capi:text-input-pane-text (y-max intf))
+     (if yrange (format nil "~A" (elt yrange 1)) "")
+     (capi:text-input-pane-text (plot-fn intf)) (format nil "~S" plot-fn)
+     ;; (capi:text-input-pane-text (domain intf))  (format nil "~S" domain)
+     (capi:text-input-pane-text (style intf)) (format nil "~S" *plot-style*)
+     (capi:button-selected (grid intf)) fullgrid)
     (set-colorpatch-color (bg-color intf) background)
     (set-colorpatch-color (fg-color intf) foreground)
-    (capi:contain intf)
-    ;; (capi:display-dialog intf :continuation continuation)
-    ))
-
+    (capi:contain intf)))
 
 (defun read-text-pane-text (widget)
   (read-from-string (capi:text-input-pane-text widget) nil nil))
@@ -272,69 +268,51 @@
 (defun exit-axis-dialog (item intf)
   (declare (ignore item))
   (catch :gz-error
-    (let ((xmin    (eval-text-pane-text (x-min   intf)))
-          (xmax    (eval-text-pane-text (x-max   intf)))
-          (ymin    (eval-text-pane-text (y-min   intf)))
-          (ymax    (eval-text-pane-text (y-max   intf)))
-          #|(domain  (eval-text-pane-text (domain  intf)))|#)
-      
-      (unless xmin
-        (setf xmin 0))
-      (unless xmax
-        (setf xmax 0))
-      
-      (unless ymin
-        (setf ymin 0))
-      (unless ymax
-        (setf ymax 0))
-
-      #|(unless domain
-        (setf domain '(0 1)))|#
-      
-      (cond ((not (numberp xmin))
-             (capi:display-message "X Min not numeric"))
-            ((not (numberp xmax))
-             (capi:display-message "X Max not numeric"))
-            ((not (numberp ymin))
-             (capi:display-message "Y Min not numeric"))
-            ((not (numberp ymax))
-             (capi:display-message "Y Max not numeric"))
-            #|((or (not (consp domain))
-                 (null (cdr domain))
-                 (not (numberp (first domain)))
-                 (not (numberp (second domain))))
-             (capi:display-message "Domain should be (min max) number pair"))|#
-            (t
-             (let* ((title   (capi:text-input-pane-text (plot-title intf)))
-                    (xtitle  (capi:text-input-pane-text (x-title intf)))
-                    (ytitle  (capi:text-input-pane-text (y-title intf)))
-                    (xlog    (eq :log (capi:choice-selected-item (x-log intf))))
-                    (ylog    (eq :log (capi:choice-selected-item (y-log intf))))
-                    (bg      (get-colorpatch-color (bg-color intf)))
-                    (fg      (get-colorpatch-color (fg-color intf)))
-                    (plot-fn (read-text-pane-text (plot-fn intf)))
-                    (props   `(:title      ,title
-                               :xtitle     ,xtitle
-                               :ytitle     ,ytitle
-                               :xlog       ,xlog
-                               :ylog       ,ylog
-                               :xrange     ,(unless (= xmin xmax) `(,xmin ,xmax))
-                               :yrange     ,(unless (= ymin ymax) `(,ymin ,ymax))
-                               :fullgrid   ,(capi:button-selected (grid intf))
-                               :foreground ,fg
-                               :background ,bg
-                               ;; :domain     ,domain
-                               :plot-fn    ,plot-fn)))
-               ;; (capi:exit-dialog props)
-               (setf *plot-style* (read-text-pane-text (style intf)))
-               (helpme-plot props)
-               ))
-            ))))
+    (let ((xmin (eval-text-pane-text (x-min intf)))
+          (xmax (eval-text-pane-text (x-max intf)))
+          (ymin (eval-text-pane-text (y-min intf)))
+          (ymax (eval-text-pane-text (y-max intf))))
+      (unless xmin (setf xmin 0))
+      (unless xmax (setf xmax 0))
+      (unless ymin (setf ymin 0))
+      (unless ymax (setf ymax 0))
+      (cond
+       ((not (numberp xmin))
+        (capi:display-message "X Min not numeric"))
+       ((not (numberp xmax))
+        (capi:display-message "X Max not numeric"))
+       ((not (numberp ymin))
+        (capi:display-message "Y Min not numeric"))
+       ((not (numberp ymax))
+        (capi:display-message "Y Max not numeric"))
+       (t
+        (let* ((title   (capi:text-input-pane-text (plot-title intf)))
+               (xtitle  (capi:text-input-pane-text (x-title intf)))
+               (ytitle  (capi:text-input-pane-text (y-title intf)))
+               (xlog    (eq :log (capi:choice-selected-item (x-log intf))))
+               (ylog    (eq :log (capi:choice-selected-item (y-log intf))))
+               (bg      (get-colorpatch-color (bg-color intf)))
+               (fg      (get-colorpatch-color (fg-color intf)))
+               (plot-fn (read-text-pane-text (plot-fn intf)))
+               (props
+                `(:title      ,title
+                  :xtitle     ,xtitle
+                  :ytitle     ,ytitle
+                  :xlog       ,xlog
+                  :ylog       ,ylog
+                  :xrange     ,(unless (= xmin xmax) `(,xmin ,xmax))
+                  :yrange     ,(unless (= ymin ymax) `(,ymin ,ymax))
+                  :fullgrid   ,(capi:button-selected (grid intf))
+                  :foreground ,fg
+                  :background ,bg
+                  :plot-fn    ,plot-fn)))
+          (setf *plot-style* (read-text-pane-text (style intf)))
+          (helpme-plot props)))))))
 
 (defun sinc (x)
   (if (zerop x)
-      1.0
-    (/ (sin (* pi x)) (* pi x))))
+      1D0
+      (/ (sin (* pi x)) (* pi x))))
 
 (defun helpme-plot (props)
   (let ((bg-prev (getf *plot-axis-properties* :background))
@@ -348,16 +326,14 @@
            ;; (getf *plot-axis-properties* :domain)
            (let ((xrange (getf props :xrange '(0 1))))
              (if (or (null xrange)
-                     (= (elt xrange 0)
-                        (elt xrange 1)))
+                     (= (elt xrange 0) (elt xrange 1)))
                  '(0 1)
-               xrange))
+                 xrange))
            (if (consp fn)
                (compile nil fn)
-             fn)
+               fn)
            :clear t
-           (append props
-                   *plot-style*))))
+           (append props *plot-style*))))
 
 (defun helpme ()
   (apply #'make-axis-property-dialog *plot-axis-properties*))
