@@ -106,8 +106,8 @@
                   xlog
                   ylog
                   ;; (linewidth (or thick 1))
-                  (logo *ext-logo*)
-                  (logo-alpha *ext-logo-alpha*)
+                  logo
+                  logo-alpha
                   (cright1 *cright1*)
                   (cright2 *cright2*)
                   ;;(fullgrid t)
