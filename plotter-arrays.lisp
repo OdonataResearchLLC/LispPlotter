@@ -4,6 +4,7 @@
 ;;; Generalized operators
 
 (defgeneric coerce-to-vector (object)
+  (:method (object) (make-array 1 :initial-element object))
   (:method ((object vector)) object)
   (:method ((object list)) (coerce object 'vector))
   (:method ((object array))
