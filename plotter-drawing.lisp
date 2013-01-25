@@ -493,10 +493,9 @@
   (ignore-errors
     (apply #'unsafe-pw-plot-xv-yv cpw port xvector yvector args)))
 
-;; ------------------------------------------------------------------------------
+;;; bear in mind that the y values at this point are absolute screen
+;;; coords and are inverted with respect to data ordering
 (defun get-bar-symbol-plotfn (port symbol color neg-color bar-width testfn)
-  ;; bear in mind that the y values at this point are absolute screen
-  ;; coords and are inverted with respect to data ordering
   (ecase symbol
     (:sigma
      (lambda (x ys)
@@ -504,25 +503,19 @@
              (ymax (aref ys 1)))
          (gp:draw-line port x ymin x ymax)
          (gp:draw-line port (- x (/ bar-width 2)) ymin (+ x (/ bar-width 2)) ymin)
-         (gp:draw-line port (- x (/ bar-width 2)) ymax (+ x (/ bar-width 2)) ymax)
-         )))
-
+         (gp:draw-line port (- x (/ bar-width 2)) ymax (+ x (/ bar-width 2)) ymax))))
     (:hl-bar
      (lambda (x ys)
        (let ((ymin (aref ys 0))
              (ymax (aref ys 1)))
-         (gp:draw-line port x ymin x ymax)
-         )))
-    
+         (gp:draw-line port x ymin x ymax))))
     (:hlc-bar
      (lambda (x ys)
        (let ((h (aref ys 0))
              (l (aref ys 1))
              (c (aref ys 2)))
          (gp:draw-line port x l x h)
-         (gp:draw-line port x c (+ x (/ bar-width 2)) c)
-         )))
-    
+         (gp:draw-line port x c (+ x (/ bar-width 2)) c))))
     (:ohlc-bar
      (lambda (x ys)
        (let ((o (aref ys 0))
@@ -532,9 +525,7 @@
          (with-color (port (if (funcall testfn c o) neg-color color))
            (gp:draw-line port x l x h)
            (gp:draw-line port (- x (/ bar-width 2)) o x o)
-           (gp:draw-line port x c (+ x (/ bar-width 2)) c)
-           ))))
-    
+           (gp:draw-line port x c (+ x (/ bar-width 2)) c)))))
     (:candlestick
      (lambda (x ys)
        (let ((o (aref ys 0))
@@ -546,17 +537,16 @@
                (gp:draw-line port x l x h)
                (gp:draw-rectangle port (- x (/ bar-width 2)) o bar-width (- c o)
                                   :filled t))
-           (progn
-             (with-color (port :black)
-               (gp:draw-line port x l x h))
-             (with-color (port color)
-               (gp:draw-rectangle port (- x (/ bar-width 2)) o bar-width (- c o)
-                                  :filled t))
-             (with-color (port :black)
-               (gp:draw-rectangle port (- x (/ bar-width 2)) o bar-width (- c o)))
-             ))
-         )))
-    ))
+             (progn
+               (with-color (port :black)
+                 (gp:draw-line port x l x h))
+               (with-color (port color)
+                 (gp:draw-rectangle
+                  port (- x (/ bar-width 2)) o bar-width (- c o)
+                  :filled t))
+               (with-color (port :black)
+                 (gp:draw-rectangle
+                  port (- x (/ bar-width 2)) o bar-width (- c o))))))))))
 
 ;;-------------------------------------------------------------------
 (defmethod unsafe-pw-plot-bars-xv-yv ((cpw <plotter-mixin>) port xvector yvectors 
