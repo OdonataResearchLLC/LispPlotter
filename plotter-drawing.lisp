@@ -629,7 +629,6 @@
   (ignore-errors
     (apply #'unsafe-pw-plot-bars-xv-yv cpw port xvector yvectors args)))
 
-;; ============================================================
 (defun plt-draw-shape (pane port shape x0 y0 x1 y1
                           &key
                           color alpha filled
@@ -637,84 +636,57 @@
                           start-angle sweep-angle)
   ;; for rectangles: shape = :rect, (x0,y0) and (x1,y1) are opposite corners
   ;; for ellipses:   shape = :ellipse, (x0,y0) is ctr (x1,y1) are radii
-  (let* ((x0        (get-x-for-location pane (get-x-location pane x0)))
-         (y0        (get-y-for-location pane (get-y-location pane y0)))
-         (x1        (get-x-for-location pane (get-x-location pane x1)))
-         (y1        (get-y-for-location pane (get-y-location pane y1)))
-         (x0        (if (plotter-xlog pane)
-                        (log10 x0)
-                      x0))
-         (x1        (if (plotter-xlog pane)
-                        (log10 x1)
-                      x1))
-         (y0        (if (plotter-ylog pane)
-                        (log10 y0)
-                      y0))
-         (y1        (if (plotter-ylog pane)
-                        (log10 y1)
-                      y1))
-         (wd        (- x1 x0))
-         (ht        (- y1 y0))
-         (sf        (plotter-sf  pane))
-         (box       (let ((box (plotter-box pane)))
-                      (adjust-box
-                       (list (1+ (* sf (box-left box)))
-                             (* sf (box-top box))
-                             (1- (* sf (box-width box)))
-                             (* sf (box-height box))))
-                      ))
-         (xform     (plotter-xform pane))
-         (color     (adjust-color pane color alpha))
-         (bcolor    (adjust-color pane border-color border-alpha))
+  (let* ((x0 (get-x-for-location pane (get-x-location pane x0)))
+         (y0 (get-y-for-location pane (get-y-location pane y0)))
+         (x1 (get-x-for-location pane (get-x-location pane x1)))
+         (y1 (get-y-for-location pane (get-y-location pane y1)))
+         (x0 (if (plotter-xlog pane) (log10 x0) x0))
+         (x1 (if (plotter-xlog pane) (log10 x1) x1))
+         (y0 (if (plotter-ylog pane) (log10 y0) y0))
+         (y1 (if (plotter-ylog pane) (log10 y1) y1))
+         (wd (- x1 x0))
+         (ht (- y1 y0))
+         (sf (plotter-sf pane))
+         (box
+          (let ((box (plotter-box pane)))
+            (adjust-box
+             (list (1+ (* sf (box-left box)))
+                   (* sf (box-top box))
+                   (1- (* sf (box-width box)))
+                   (* sf (box-height box))))))
+         (xform (plotter-xform pane))
+         (color (adjust-color pane color alpha))
+         (bcolor (adjust-color pane border-color border-alpha))
          (linewidth (adjust-linewidth (* sf (or border-thick 0)))))
-    
     (gp:with-graphics-state (port
-                             :thickness  linewidth
+                             :thickness linewidth
                              :foreground color
-                             :line-end-style   :butt
+                             :line-end-style :butt
                              :line-joint-style :miter
-                             :mask       box)
-
+                             :mask box)
       (gp:with-graphics-scale (port sf sf)
-
         (gp:with-graphics-transform (port xform)
           (when filled
             (ecase shape
               (:rect
-               (gp:draw-rectangle port
-                                  x0 y0 wd ht
-                                  :filled t))
+               (gp:draw-rectangle
+                port x0 y0 wd ht :filled t))
               (:ellipse
-               (gp:draw-ellipse port
-                                x0 y0 x1 y1
-                                :filled t))
-              
+               (gp:draw-ellipse
+                port x0 y0 x1 y1 :filled t))
               (:arc
-               (gp:draw-arc port
-                            x0 y0 wd ht
-                            start-angle sweep-angle
-                            :filled t))
-              ))
-          
+               (gp:draw-arc
+                port x0 y0 wd ht start-angle sweep-angle :filled t))))
           (when border-thick
             (with-color (port bcolor)
               (case shape
                 (:rect
-                 (gp:draw-rectangle port
-                                    x0 y0 wd ht
-                                    :filled nil))
+                 (gp:draw-rectangle
+                  port x0 y0 wd ht :filled nil))
                 (:ellipse
-                 (gp:draw-ellipse port
-                                  x0 y0 x1 y1
-                                  :filled nil))
-
+                 (gp:draw-ellipse
+                  port x0 y0 x1 y1 :filled nil))
                 (:arc
-                 (gp:draw-arc port
-                              x0 y0 wd ht
-                              start-angle sweep-angle
-                              :filled nil))
-                )))
-          )))
-    ))
-
-
+                 (gp:draw-arc
+                  port x0 y0 wd ht start-angle sweep-angle
+                  :filled nil))))))))))
