@@ -300,204 +300,194 @@
                           &allow-other-keys)
   ;; this is the base plotting routine
   ;; called only from within the pane process
-  (let* ((sf        (plotter-sf  cpw))
-         (box       (let ((box (plotter-box cpw)))
-                      (adjust-box
-                       (list (1+ (* sf (box-left box)))
-                             (* sf (box-top box))
-                             (1- (* sf (box-width box)))
-                             (* sf (box-height box))))
-                      ))
-         (xform     (plotter-xform cpw))
-         
+  (let* ((sf  (plotter-sf  cpw))
+         (box
+          (let ((box (plotter-box cpw)))
+            (adjust-box
+             (list (1+ (* sf (box-left box)))
+                   (* sf (box-top box))
+                   (1- (* sf (box-width box)))
+                   (* sf (box-height box))))))
+         (xform (plotter-xform cpw))
          ;; (color     (adjust-color cpw color alpha))
          ;; (linewidth (adjust-linewidth (* sf linewidth)))
-         (line-style   (line-style   plot-style))
+         (line-style (line-style   plot-style))
          (symbol-style (symbol-style plot-style))
-
-         (nel       (if xvector
-                        (min (length-of xvector) (length-of yvector))
-                      (length-of yvector)))
-
-         (xs         (let ((scanner (make-scanner (or xvector
-                                                      nel))
-                                    ))
-                       (if (plotter-xlog cpw)
-                           (make-transformer scanner #'log10)
-                         scanner)))
-
-         (ys         (let ((scanner (make-scanner yvector)))
-                       (if (plotter-ylog cpw)
-                           (make-transformer scanner #'log10)
-                         scanner)))
-         (pairs     (make-pair-scanner xs ys)))
-
+         (nel
+          (if xvector
+              (min (length-of xvector) (length-of yvector))
+              (length-of yvector)))
+         (xs
+          (let ((scanner (make-scanner (or xvector nel))))
+            (if (plotter-xlog cpw)
+                (make-transformer scanner #'log10)
+                scanner)))
+         (ys
+          (let ((scanner (make-scanner yvector)))
+            (if (plotter-ylog cpw)
+                (make-transformer scanner #'log10)
+                scanner)))
+         (pairs (make-pair-scanner xs ys)))
     (when (legend plot-style)
       (append-legend cpw plot-style))
-
     (when legend-x
       (setf (plotter-legend-x cpw) legend-x))
     (when legend-y
       (setf (plotter-legend-y cpw) legend-y))
     (when legend-anchor
       (setf (plotter-legend-anchor cpw) legend-anchor))
-
     (gp:with-graphics-state (port
-                             ;; :thickness  linewidth
-                             ;; :dashed     (not (null linedashing))
-                             ;; :dash       (mapcar (um:expanded-curry (v) #'* sf) linedashing)
+                             ;; :thickness linewidth
+                             ;; :dashed (not (null linedashing))
+                             ;; :dash (mapcar (expanded-curry (v) #'* sf) linedashing)
                              ;; :foreground color
-                             :line-end-style   :butt
+                             :line-end-style :butt
                              :line-joint-style :miter
-                             :mask       box)
-
+                             :mask box)
       (labels ((draw-lines ()
                  (gp:with-graphics-state (port
-                                          :thickness  (adjust-linewidth (* sf (line-thick line-style)))
-                                          :foreground (adjust-color port
-                                                                    (line-color line-style)
-                                                                    (line-alpha line-style))
-                                          :dashed     (line-dashing line-style)
-                                          :dash       (mapcar (expanded-curry (v) #'* sf)
-                                                              (line-dashing line-style)))
+                                          :thickness
+                                          (adjust-linewidth
+                                           (* sf (line-thick line-style)))
+                                          :foreground
+                                          (adjust-color
+                                           port
+                                           (line-color line-style)
+                                           (line-alpha line-style))
+                                          :dashed
+                                          (line-dashing line-style)
+                                          :dash
+                                          (mapcar
+                                           (expanded-curry (v) #'* sf)
+                                           (line-dashing line-style)))
                    (gp:with-graphics-scale (port sf sf)
                      (gp:with-graphics-transform (port xform)
-                       (draw-polyline port pairs)))
-                   )))
-
-        (cond (symbol-style
-               (case (plot-symbol symbol-style)
-                 
-                 (:vbars
-                  (gp:with-graphics-state (port
-                                           :foreground (adjust-color port
-                                                                     (fill-color symbol-style)
-                                                                     (fill-alpha symbol-style)))
-                    (gp:with-graphics-scale (port sf sf)
-                      (if (bar-width symbol-style)
-                        (let* ((wd   (get-x-width cpw (bar-width symbol-style)))
-                               (wd/2 (* 0.5 wd))
-                               (off  (if (bar-offset symbol-style)
-                                       (get-x-width cpw (bar-offset symbol-style))
-                                       0)))
-                          (loop for pair = (next-item pairs)
-                                while pair
-                                do
-                                (let ((x (aref pair 0))
-                                      (y (aref pair 1)))
-                                  (multiple-value-bind (xx yy)
-                                      (gp:transform-point xform x y)
-                                    (multiple-value-bind (_ yy0)
-                                        (gp:transform-point xform x 0)
-                                      (declare (ignore _))
-                                      (gp:draw-rectangle port
-                                                         (+ off (- xx wd/2)) yy0
-                                                         wd (- yy yy0)
-                                                         :filled t)
-                                      )))
-                                ))
-                        (gp:with-graphics-transform (port xform)
-                          (draw-vertical-bars port pairs))
-                        ))))
-                 
-                 (:hbars
-                  (gp:with-graphics-state (port
-                                           :foreground (adjust-color port
-                                                                     (fill-color symbol-style)
-                                                                     (fill-alpha symbol-style)))
-                    (gp:with-graphics-scale (port sf sf)
-                      (if (bar-width symbol-style)
-                        (let* ((wd   (get-y-width cpw (bar-width symbol-style)))
-                               (wd/2 (* 0.5 wd))
-                               (off  (if (bar-offset symbol-style)
-                                       (get-y-width cpw (bar-offset symbol-style))
-                                       0)))
-                          (loop for pair = (next-item pairs)
-                                while pair
-                                do
-                                (let ((x (aref pair 0))
-                                      (y (aref pair 1)))
-                                  (multiple-value-bind (xx yy)
-                                      (gp:transform-point xform x y)
-                                    (multiple-value-bind (xx0 _)
-                                        (gp:transform-point xform 0 y)
-                                      (declare (ignore _))
-                                      (gp:draw-rectangle port
-                                                         xx0 (+ off (- yy wd/2))
-                                                         (- xx xx0) wd
-                                                         :filled t)
-                                      )))
-                                ))
-                        (gp:with-graphics-transform (port xform)
-                          (draw-horizontal-bars port pairs))
-                        ))))
-                 
-                 (:sampled-data
-                  (gp:with-graphics-state (port
-                                           :foreground (adjust-color port
-                                                                     (or (and line-style
-                                                                              (line-color line-style))
-                                                                         :black)
-                                                                     (or (and line-style
-                                                                              (line-alpha line-style))
-                                                                         1))
-                                           :thickness  (adjust-linewidth (* sf (or (and line-style
-                                                                                        (line-thick line-style))
-                                                                                   1))))
-                    (gp:with-graphics-scale (port sf sf)
-                      (let ((dotfn (get-symbol-plotfn port sf (symbol-style plot-style))))
-                        (loop for pair = (next-item pairs)
-                              while pair
-                              do
-                              (let ((x (aref pair 0))
-                                    (y (aref pair 1)))
-                                (multiple-value-bind (xx yy)
-                                    (gp:transform-point xform x y)
-                                  (multiple-value-bind (_ yy0)
-                                      (gp:transform-point xform x 0)
-                                    (declare (ignore _))
-                                    (gp:draw-line port xx yy0 xx yy)
-                                    (funcall dotfn xx yy))
-                                  ))
-                              )))
-                    ))
-                 
-                 (otherwise
-                  (when line-style
-                      (draw-lines)
-                      (reset-scanner pairs))
-                  
-                  (gp:with-graphics-scale (port sf sf)
-                    (let ((plotfn (get-symbol-plotfn port sf symbol-style)))
-                      (loop for pair = (next-item pairs)
-                            while pair
-                            do
-                            (let ((x (aref pair 0))
-                                  (y (aref pair 1)))
-                              (multiple-value-bind (xx yy)
-                                  (gp:transform-point xform x y)
-                                (funcall plotfn xx yy)
-                                )))
-                      )))
-                 ))
-              
-              (line-style
-               (case (line-type line-style)
-                 (:stepped
-                  (gp:with-graphics-state (port
-                                           :thickness  (adjust-linewidth (* sf (line-thick line-style)))
-                                           :foreground (adjust-color port
-                                                                     (line-color line-style)
-                                                                     (line-alpha line-style)))
-                    (gp:with-graphics-scale (port sf sf)
-                      (gp:with-graphics-transform (port xform)
-                        (draw-staircase port pairs)))
-                    ))
-                 
-                 (otherwise ;; :interpolated
-                            (draw-lines))
-                 )))
-        ))))
+                       (draw-polyline port pairs))))))
+        (cond
+         (symbol-style
+          (case (plot-symbol symbol-style)
+            (:vbars
+             (gp:with-graphics-state (port
+                                      :foreground
+                                      (adjust-color
+                                       port
+                                       (fill-color symbol-style)
+                                       (fill-alpha symbol-style)))
+               (gp:with-graphics-scale (port sf sf)
+                 (if (bar-width symbol-style)
+                     (let* ((wd (get-x-width cpw (bar-width symbol-style)))
+                            (wd/2 (* 0.5 wd))
+                            (off
+                             (if (bar-offset symbol-style)
+                                 (get-x-width cpw (bar-offset symbol-style))
+                                 0)))
+                       (loop
+                        for pair = (next-item pairs)
+                        while pair do
+                        (let ((x (aref pair 0))
+                              (y (aref pair 1)))
+                          (multiple-value-bind (xx yy)
+                              (gp:transform-point xform x y)
+                            (multiple-value-bind (_ yy0)
+                                (gp:transform-point xform x 0)
+                              (declare (ignore _))
+                              (gp:draw-rectangle
+                               port
+                               (+ off (- xx wd/2)) yy0 wd (- yy yy0)
+                               :filled t))))))
+                     (gp:with-graphics-transform (port xform)
+                       (draw-vertical-bars port pairs))))))
+            (:hbars
+             (gp:with-graphics-state (port
+                                      :foreground
+                                      (adjust-color
+                                       port
+                                       (fill-color symbol-style)
+                                       (fill-alpha symbol-style)))
+               (gp:with-graphics-scale (port sf sf)
+                 (if (bar-width symbol-style)
+                     (let* ((wd (get-y-width cpw (bar-width symbol-style)))
+                            (wd/2 (* 0.5 wd))
+                            (off
+                             (if (bar-offset symbol-style)
+                                 (get-y-width cpw (bar-offset symbol-style))
+                                 0)))
+                       (loop
+                        for pair = (next-item pairs)
+                        while pair do
+                        (let ((x (aref pair 0))
+                              (y (aref pair 1)))
+                          (multiple-value-bind (xx yy)
+                              (gp:transform-point xform x y)
+                            (multiple-value-bind (xx0 _)
+                                (gp:transform-point xform 0 y)
+                              (declare (ignore _))
+                              (gp:draw-rectangle
+                               port
+                               xx0 (+ off (- yy wd/2))
+                               (- xx xx0) wd
+                               :filled t))))))
+                     (gp:with-graphics-transform (port xform)
+                       (draw-horizontal-bars port pairs))))))
+            (:sampled-data
+             (gp:with-graphics-state (port
+                                      :foreground
+                                      (adjust-color
+                                       port
+                                       (or
+                                        (and line-style (line-color line-style))
+                                        :black)
+                                       (or
+                                        (and line-style (line-alpha line-style))
+                                        1))
+                                      :thickness
+                                      (adjust-linewidth
+                                       (* sf (or (and line-style (line-thick line-style)) 1))))
+               (gp:with-graphics-scale (port sf sf)
+                 (let ((dotfn (get-symbol-plotfn port sf (symbol-style plot-style))))
+                   (loop
+                    for pair = (next-item pairs)
+                    while pair do
+                    (let ((x (aref pair 0))
+                          (y (aref pair 1)))
+                      (multiple-value-bind (xx yy)
+                          (gp:transform-point xform x y)
+                        (multiple-value-bind (_ yy0)
+                            (gp:transform-point xform x 0)
+                          (declare (ignore _))
+                          (gp:draw-line port xx yy0 xx yy)
+                          (funcall dotfn xx yy)))))))))
+            (otherwise
+             (when line-style
+               (draw-lines)
+               (reset-scanner pairs))
+             (gp:with-graphics-scale (port sf sf)
+               (let ((plotfn (get-symbol-plotfn port sf symbol-style)))
+                 (loop
+                  for pair = (next-item pairs)
+                  while pair do
+                       (let ((x (aref pair 0))
+                             (y (aref pair 1)))
+                         (multiple-value-bind (xx yy)
+                             (gp:transform-point xform x y)
+                           (funcall plotfn xx yy)))))))))
+         (line-style
+          (case (line-type line-style)
+            (:stepped
+             (gp:with-graphics-state (port
+                                      :thickness
+                                      (adjust-linewidth
+                                       (* sf (line-thick line-style)))
+                                      :foreground
+                                      (adjust-color
+                                       port
+                                       (line-color line-style)
+                                       (line-alpha line-style)))
+               (gp:with-graphics-scale (port sf sf)
+                 (gp:with-graphics-transform (port xform)
+                   (draw-staircase port pairs)))))
+            ;; :interpolated
+            (otherwise (draw-lines)))))))))
 
 (defmethod pw-plot-xv-yv ((cpw <plotter-mixin>) port xvector yvector &rest args)
   (ignore-errors
