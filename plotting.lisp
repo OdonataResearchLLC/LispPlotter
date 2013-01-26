@@ -79,7 +79,7 @@
   '(:thick 2))
 
 (defvar *plot-axis-properties*
-  '(:plot-fn plt::sinc
+  '(:plot-fn plotter::sinc
     :domain  (0 1)))
 
 (capi:define-interface axis-property-sheet ()
@@ -93,7 +93,7 @@
    (plot-fn
     capi:text-input-pane
     :title "Function"
-    :text  "plt::sinc"
+    :text  "plotter::sinc"
     :accessor plot-fn)
    (x-title
     capi:text-input-pane
@@ -231,7 +231,7 @@
                                   (background :white)
                                   (foreground :black)
                                   (fullgrid t)
-                                  (plot-fn 'plt::sinc)
+                                  (plot-fn 'plotter::sinc)
                                   ;; (domain '(0 1))
                                   ;; continuation
                                   &allow-other-keys)
@@ -322,7 +322,7 @@
       (wclose 'plt)))
   (setf *plot-axis-properties* props)
   (let ((fn (getf props :plot-fn #'identity)))
-    (apply #'plt:fplot 'plt
+    (apply #'plotter:fplot 'plt
            ;; (getf *plot-axis-properties* :domain)
            (let ((xrange (getf props :xrange '(0 1))))
              (if (or (null xrange)

@@ -1,24 +1,26 @@
 
 (defpackage :plotter
-  (:nicknames #:plt)
-  (:use       #:common-lisp)
+  (:use :common-lisp)
+  (:export :clear
+           :plot
+           :fplot)
   (:export
    #:*plotter-window-class*
    #:<plotter-window>
    #:<plotter-pane>
    #:<plotter-mixin>
-   #:window ;; these functions take a symbolic window id argument
+
+   ;; these functions take a symbolic window id argument
+   #:window
    #:wset
    #:wshow
    #:wclose
-   
-   #:clear  ;; these functions require a <plotter-pane> argument
-   #:plot
+
+   ;; these functions require a <plotter-pane> argument
    #:axes
    #:draw-text
    #:with-delayed-update
    #:histogram
-   #:fplot
    #:paramplot
    #:plot-bars
    #:read-image
